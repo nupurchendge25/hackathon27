@@ -1,0 +1,151 @@
+/* src/index.css - Tailwind + Clean Full-Width App Baseline (updated) */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---------- Root tokens (use these in components or tailwind.config) ---------- */
+:root {
+  --accent-1: #0ea5e9;   /* sky-500 */
+  --accent-2: #7c3aed;   /* violet-600 */
+  --muted: #6b7280;      /* gray-500 */
+  --bg: #ffffff;
+  --card: #ffffff;
+  --glass-bg: rgba(255,255,255,0.66);
+  --header-height: 80px; /* update if your header height changes */
+}
+
+/* ---------- Base / layout ---------- */
+html {
+  scroll-behavior: smooth;
+  height: 100%;
+  background-color: var(--bg);
+}
+
+body {
+  font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Arial";
+  color: #111827;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100%;
+  margin: 0;
+  background-color: var(--bg);
+}
+
+/* full-width baseline */
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+}
+
+/* optional centered container for inner content */
+.app-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+}
+
+/* prevent navbar overlap when scrolling to anchors */
+.scroll-offset {
+  scroll-margin-top: calc(var(--header-height) + 0.5rem);
+}
+
+/* small utilities for reusable visual styles */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,0.4);
+}
+
+.elevated {
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+  border-radius: 0.75rem;
+}
+
+.card {
+  padding: 1.5rem;
+  background: var(--card);
+  border-radius: 0.75rem;
+}
+
+/* small accent helpers */
+.accent-gradient {
+  background: linear-gradient(90deg, var(--accent-1), var(--accent-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* subtle outline - good for focus states */
+.subtle-outline {
+  box-shadow: 0 0 0 4px rgba(14,165,233,0.06);
+}
+
+/* demo utilities */
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover { filter: drop-shadow(0 0 2em rgba(100,108,255,0.66)); }
+
+/* simple responsive tweak for hero video */
+.hero-video {
+  border-radius: 1rem;
+  overflow: hidden;
+}
+
+/* ---------- Animations & motion ---------- */
+/* small float animation used for glass cards */
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+  100% { transform: translateY(0px); }
+}
+.animate-float { animation: float 6s ease-in-out infinite; }
+
+/* moving gradient used for logo or background accents */
+@keyframes bgShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.bg-shift { background-size: 200% 200%; animation: bgShift 6s ease infinite; }
+
+/* fade-in up used for section reveals */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-in { animation: fadeInUp .6s ease both; }
+
+/* reduce motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .animate-float,
+  .bg-shift,
+  .fade-in {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ---------- Accessibility / focus ---------- */
+:focus { outline: none; }
+:focus-visible { outline: 3px solid rgba(14,165,233,0.18); outline-offset: 3px; }
+
+/* ---------- Utility small tweaks ---------- */
+* { box-sizing: border-box; }
+
+/* If you want a persistent thin divider used across sections */
+.section-divider {
+  height: 1px;
+  background: linear-gradient(90deg, rgba(0,0,0,0.04), rgba(0,0,0,0.02));
+  margin: 1.5rem 0;
+}
