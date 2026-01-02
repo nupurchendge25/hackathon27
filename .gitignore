@@ -9,3 +9,13 @@ node_modules/
 
 # Env
 .env
+
+# Ignore uploaded images but keep folder
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+backend/*.jpg
+backend/*.png
+backend/*.jpeg
+
+
