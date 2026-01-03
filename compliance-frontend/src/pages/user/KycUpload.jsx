@@ -11,6 +11,8 @@ export default function KycUpload() {
   const navigate = useNavigate();
   const [videoKyc, setVideoKyc] = useState(null);
   const location = useLocation();
+  const [submitting, setSubmitting] = useState(false);
+
 
   const { kycResult, images } = location.state || {};
 
@@ -121,6 +123,8 @@ export default function KycUpload() {
     alert("Please upload all required documents");
     return;
   }
+    setSubmitting(true); // 👈 START loading
+
 
   const formData = new FormData();
 
@@ -168,16 +172,18 @@ navigate("/user/kyc/detail", {
 
 
 
-  } catch (err) {
+    } catch (err) {
     console.error(err);
     alert(
-  err.message.includes("{")
-    ? JSON.parse(err.message).error || "Submission failed"
-    : err.message
-);
-
+      err.message.includes("{")
+        ? JSON.parse(err.message).error || "Submission failed"
+        : err.message
+    );
+  } finally {
+    setSubmitting(false); // 👈 STOP loading
   }
 };
+
 
   // -------------------------------------------------------------------------------
 
@@ -440,17 +446,45 @@ navigate("/user/kyc/detail", {
                 </button>
 
                 <button
-                  type="button"
-                  onClick={handleSubmitToBackend}
-                  disabled={!frontId || !addressProof || !selfie}
-                  className={`px-4 py-2 rounded-md text-white shadow ${
-                    !frontId || !addressProof || !selfie
-                      ? "bg-gray-300 cursor-not-allowed"
-                      : "bg-gradient-to-r from-emerald-600 to-green-500"
-                  }`}
-                >
-                  Submit KYC
-                </button>
+  type="button"
+  onClick={handleSubmitToBackend}
+  disabled={submitting || !frontId || !addressProof || !selfie}
+  className={`px-4 py-2 rounded-md text-white shadow flex items-center justify-center gap-2
+    ${
+      submitting || !frontId || !addressProof || !selfie
+        ? "bg-gray-300 cursor-not-allowed"
+        : "bg-gradient-to-r from-emerald-600 to-green-500"
+    }`}
+>
+  {submitting ? (
+    <>
+      <svg
+        className="animate-spin h-4 w-4 text-white"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+      >
+        <circle
+          className="opacity-25"
+          cx="12"
+          cy="12"
+          r="10"
+          stroke="currentColor"
+          strokeWidth="4"
+        />
+        <path
+          className="opacity-75"
+          fill="currentColor"
+          d="M4 12a8 8 0 018-8v8z"
+        />
+      </svg>
+      Submitting...
+    </>
+  ) : (
+    "Submit KYC"
+  )}
+</button>
+
               </div>
 
             </div> {/* end scrollable */}

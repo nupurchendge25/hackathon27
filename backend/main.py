@@ -15,10 +15,10 @@ from kyc import run_full_kyc
 # ==========================================================
 app = FastAPI(title="KYC Verification API")
 
-# ---------------- CORS ----------------
+# ---------------- CORS (DEV ONLY) ----------------
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # DEV only
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -52,6 +52,19 @@ def save_file(file: UploadFile, allowed_types: set) -> str:
 
 
 # ==========================================================
+#              AADHAAR MASKING (COMPLIANCE)
+# ==========================================================
+def mask_aadhaar(aadhaar_number: str):
+    """
+    Mask Aadhaar number before sending to frontend.
+    Example: XXXX-XXXX-1234
+    """
+    if not aadhaar_number or len(aadhaar_number) != 12:
+        return None
+    return "XXXX-XXXX-" + aadhaar_number[-4:]
+
+
+# ==========================================================
 #                    API ENDPOINT
 # ==========================================================
 @app.post("/kyc/upload")
@@ -62,13 +75,13 @@ async def upload_kyc(
     video: Optional[UploadFile] = File(None),
 ):
     try:
-        # ---------------- Save files ----------------
+        # ---------------- Save uploaded files ----------------
         front_path = save_file(id_front, ALLOWED_IMAGE_TYPES)
         selfie_path = save_file(selfie, ALLOWED_IMAGE_TYPES)
         address_path = save_file(address_proof, ALLOWED_IMAGE_TYPES)
         video_path = save_file(video, ALLOWED_VIDEO_TYPES) if video else None
 
-        # ---------------- Run ML pipeline ----------------
+        # ---------------- Run ML KYC pipeline ----------------
         try:
             result = await run_in_threadpool(
                 run_full_kyc,
@@ -107,7 +120,7 @@ async def upload_kyc(
             review_reasons.append("VIDEO_IDENTITY_MISMATCH")
 
         # ==================================================
-        #           CLEAN RESPONSE FOR FRONTEND
+        #           CLEAN FRONTEND RESPONSE
         # ==================================================
         document = result.get("document_data", {})
 
@@ -117,6 +130,7 @@ async def upload_kyc(
 
             "aadhaar": {
                 "name": document.get("name"),
+                "number": mask_aadhaar(document.get("aadhaar_number")),
                 "address": document.get("address_raw")
             },
 
@@ -124,7 +138,6 @@ async def upload_kyc(
             "selfie_verification": selfie_verification,
             "video_verification": video_verification,
 
-            # 👇 MAIN ADDITION
             "review_reasons": review_reasons if review_reasons else None
         }
 

@@ -46,6 +46,21 @@ def normalize_address(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 # ==========================================================
+#               AADHAAR NUMBER EXTRACTION
+# ==========================================================
+def extract_aadhaar_number(text: str):
+    """
+    Extract Aadhaar number from OCR text.
+    Supports:
+    XXXX XXXX XXXX
+    XXXX-XXXX-XXXX
+    XXXXXXXXXXXX
+    """
+    cleaned = text.replace(" ", "").replace("-", "")
+    match = re.search(r"\b\d{12}\b", cleaned)
+    return match.group(0) if match else None
+
+# ==========================================================
 #                   QR HELPERS
 # ==========================================================
 def read_qr(image_path):
@@ -68,6 +83,7 @@ def parse_old_aadhaar(xml_data):
     return {
         "type": "aadhaar",
         "name": d.get("name"),
+        "aadhaar_number": d.get("uid"),  # ✅ Aadhaar from QR
         "address": normalize_address(raw_address),
         "address_raw": raw_address.strip(),
         "raw_text": xml_data
@@ -84,42 +100,30 @@ def extract_aadhaar_name(text):
     return None
 
 def extract_address_from_text(raw_text):
-    """
-    Extract only the actual address from Aadhaar / document text.
-    Look for lines containing 'Address' or PIN code, ignore disclaimers.
-    """
     lines = [l.strip() for l in raw_text.splitlines() if l.strip()]
     address_lines = []
 
-    # Try to locate a line starting with 'Address' (case-insensitive)
     for i, line in enumerate(lines):
         if re.search(r"address\s*[:\-]?", line, re.I):
-            # Take this line and next 3 lines
             address_lines = lines[i:i + 4]
             break
 
-    # If 'Address' not found, fallback to PIN detection
     if not address_lines:
         for i, line in enumerate(lines):
             if re.search(r"\b\d{6}\b", line):
                 address_lines = lines[max(0, i - 2): i + 2]
                 break
 
-    # If still nothing, take last 3-5 lines
     if not address_lines:
         address_lines = lines[-5:]
 
-    # Join for frontend
-    raw_address = ", ".join(address_lines).replace("\n", " ").strip()
-
-    # Normalized version for matching
+    raw_address = ", ".join(address_lines).strip()
     normalized = normalize_address(raw_address)
 
     return {
         "raw": raw_address,
         "normalized": normalized
     }
-
 
 def image_to_text(img_path):
     qr_text = read_qr(img_path)
@@ -137,8 +141,9 @@ def image_to_text(img_path):
     return {
         "type": "aadhaar",
         "name": extract_aadhaar_name(text),
-        "address": address_data["normalized"],     # for matching
-        "address_raw": address_data["raw"],         # for frontend
+        "aadhaar_number": extract_aadhaar_number(text),  # ✅ OCR Aadhaar
+        "address": address_data["normalized"],
+        "address_raw": address_data["raw"],
         "raw_text": text
     }
 
@@ -235,6 +240,8 @@ def run_full_kyc(aadhaar_img, doc_img, selfie_img, video=None):
     aadhaar = image_to_text(aadhaar_img)
     if not aadhaar or not aadhaar.get("name"):
         return {"final_status": "REJECTED", "reason": "AADHAAR_FAIL"}
+
+    print("Aadhaar Number:", aadhaar.get("aadhaar_number", "NOT_FOUND"))
 
     doc_address = extract_doc_address(doc_img)
     address_result = verify_address(aadhaar["address"], doc_address)
